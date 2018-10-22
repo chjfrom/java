@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hb.mybatis.mapper">
+	
+	<!-- 매매물 리스트 전체 보기 -->
+	<select id="list" resultType="com.hb.mybatis.CVO">
+		 select * from (
+		 		select rownum r_num, a.* from (
+		 			select * from treadeboard where t_life =1 order by treade_idx desc
+		 		) a
+		 ) where r_num between #{begin} and #{end} 
+	</select>
+	
+	<!-- 매매물 리스트 전체 보기 (높은가격) -->
+	<select id="listH" resultType="com.hb.mybatis.CVO">
+		 select * from (
+		 		select rownum r_num, a.* from (
+		 			select * from treadeboard where t_life =1 order by cast(netprofit as int) desc 
+		 		) a
+		 ) where r_num between #{begin} and #{end} 
+	</select>
+	
+	<!-- 매매물 리스트 전체 보기 (낮은가격) -->
+	<select id="listL" resultType="com.hb.mybatis.CVO">
+		 select * from (
+		 		select rownum r_num, a.* from (
+		 			select * from treadeboard where t_life =1 order by cast(netprofit as int) asc 
+		 		) a
+		 ) where r_num between #{begin} and #{end} 
+	</select>
+	
+	<!-- 전체 게시물의 수 -->
+	<select id="totalcount" resultType="int">
+		select count(*) from treadeboard 
+	</select>
+	
+	<!-- 베스트 매물 전체보기 -->
+	<select id="best_list" resultType="com.hb.mybatis.CVO">
+		select t.treade_idx,t.eduK_step1,t.netprofit,t.student_num,t.premium from
+		treadeboard t,besttrade b where t.treade_idx = b.treade_idx
+	</select>
+	
+	<!-- 오늘방문한 페이지 중복체크 -->
+	<select id="todayCheck" resultType="com.hb.mybatis.TVO">
+		select * from todayboard where u_idx = #{u_idx} and treade_idx = #{treade_idx}
+	</select>
+	
+	<!-- 오늘방문한 페이지 등록 -->
+	<insert id="todayInsert">
+		insert into todayboard values (today_seq.nextval,#{u_idx},#{treade_idx})
+	</insert>
+	
+	<!-- 관심등록 중복체그 -->
+	<select id="CheckI" resultType="com.hb.mybatis.IVO">
+		 select * from treadeintersch where u_idx = #{u_idx} and treade_idx = #{treade_idx}
+	</select>
+	
+	<!-- 매물 상세보기 -->
+	<select id="viewlist" resultType="com.hb.mybatis.CVO">
+		select * from treadeboard where treade_idx = #{viewNum}
+	</select>
+	
+	<!-- 히트 업데이트 -->
+	<update id="hitup">
+		update TREADEBOARD set edu_hit = #{edu_hit} where treade_idx = #{treade_idx}
+	</update>
+	
+	<!-- 로그인 -->
+	<select id="login" resultType="com.hb.mybatis.MVO">
+		select * from traddUser where u_id=#{u_id} and u_pass=#{u_pass} and u_life = 1
+	</select>
+	
+	<!-- 매물 등록하기 -->
+	<insert id="t_insert">
+		insert into treadeboard values(treadeboard_seq.nextval,#{u_idx},#{u_name},#{eduK_step1},#{eduK_step2},#{areaK_step1},#{areaK_step2},#{bulid_h},#{edu_extends},#{deposit},#{monthly_rent},#{student_num}
+		,#{month_sales},#{netprofit},#{premium},#{edu_introduce},#{edu_title},0,#{edu_name},#{trade_pass},sysdate,1,#{t_image_1},#{t_image_2})
+	</insert>
+	
+	
+	<!-- 실시간 검색순위 -->
+	<select id="reallist" resultType="com.hb.mybatis.CVO">
+		 select * from (
+		 		select rownum hit_num, a.* from (
+		 			select * from TREADEBOARD where t_life = 1  order by edu_hit desc
+		 		) a
+		 ) where hit_num between 1 and 10
+	</select>
+	
+	<!-- 오늘방문한 페이지 ajax -->
+	<select id="todaylist" resultType="com.hb.mybatis.TVO2">
+		select b.treade_idx,b.edu_introduce,t.u_idx from traddUser u,
+        				treadeboard b,todayboard t where u.u_idx = #{u_idx} and
+        				t.u_idx = #{u_idx} and b.treade_idx = t.treade_idx and t_life = 1
+	</select>
+	
+	
+	<!-- 관심등록 페이지 -->
+	<select id="Interestlist" resultType="com.hb.mybatis.CVO">
+		 select * from (
+		 		select rownum r_num, a.* from (
+		 			 select b.treade_idx,b.eduK_step1,b.eduK_step2,b.areaK_step1,b.areaK_step2,b.bulid_h,b.edu_extends,b.deposit,b.monthly_rent,b.student_num,
+		 			 	b.month_sales,b.netprofit,b.premium,b.edu_introduce,b.edu_title,b.edu_hit,b.edu_name,b.trade_pass,b.trade_day,s.u_idx from traddUser u,
+        				treadeboard b,TREADEINTERSCH s where u.u_idx = #{u_idx} and
+        				s.u_idx = #{u_idx} and s.t_interest =1 and b.treade_idx = s.treade_idx
+		 		) a
+		 ) where r_num between #{begin} and 1000
+	</select>
+	
+	<!-- 회원유저 수정 -->
+	<update id="user_Update">
+		update TRADDUSER set u_id = #{u_id},u_name = #{u_name},u_phon = #{u_phon},u_zen =#{u_zen},u_edu_name = #{u_edu_name},u_mail = #{u_mail}  where u_idx = #{u_idx}
+	</update>
+	
+	<!-- 회원정보수정 PW 체크 -->
+	<select id="pwChk" resultType="com.hb.mybatis.MVO">
+		select * from TRADDUSER where u_idx = #{u_idx} and u_pass = #{pw}
+	</select>
+	
+	<!-- 회원가입 ID중복 체크 -->
+	<select id="IDChk" resultType="com.hb.mybatis.MVO">
+		select * from tradduser where u_id = #{u_id}
+	</select>
+	
+	<!-- 회원가입 -->
+	<insert id="insert">
+		insert into traddUser values(traddUser_seq.nextval,#{u_id},#{u_name},#{u_pass},#{u_phon},#{u_zen},#{u_edu_name},#{u_mail},sysdate,1)
+	</insert>
+	
+	<!-- 매수 등록하기 -->
+	<insert id="b_insert">
+		insert into treadebuy values(treadebuy_seq.nextval,#{u_idx},#{u_name},#{b_areaK_step1},#{b_areaK_step2},#{b_bulid_h},#{b_edu_extends},#{b_deposit},#{b_monthly_rent},#{b_student_num},#{b_month_sales},#{b_edu_introduce}
+		,#{b_edu_title},#{b_trade_pass},#{b_edu_name},#{t_image_1},#{t_image_2},0,sysdate)
+	</insert>
+	
+	<!-- 매수 리스트 전체 보기 -->
+	<select id="buylist" resultType="com.hb.mybatis.BVO">
+		 select * from (
+		 		select rownum r_num, a.* from (
+		 			select * from treadebuy order by treadebuy_idx desc
+		 		) a
+		 ) where r_num between 1 and 3
+	</select>
+	
+	<!-- 매수 리스트 전체 보기 -->
+	<select id="buylist_more" resultType="com.hb.mybatis.BVO">
+		 select * from (
+		 		select rownum r_num, a.* from (
+		 			select * from treadebuy order by treadebuy_idx desc
+		 		) a
+		 ) where r_num between 1 and #{more}
+	</select>		
+	
+	<!-- 전체 매수 게시물의 수 -->
+	<select id="buyTotalcount" resultType="int">
+		select count(*) from treadebuy
+	</select>
+	
+	<!-- 매물번호 검색 -->
+	<select id="numesch" resultType="com.hb.mybatis.CVO">
+		select * from TREADEBOARD where treade_idx = #{title_tex}
+	</select>
+	
+	<!-- 제목으로 검색 -->
+	<select id="titlesch" resultType="com.hb.mybatis.CVO">
+		select * from TREADEBOARD where  edu_title like '%' || #{title_tex} || '%'
+	</select>
+	
+	
+	<!-- 1단계 검색 -->
+	<select id="select01" resultType="com.hb.mybatis.CVO">
+		select * from TREADEBOARD
+		<where>
+			<if test=" sel1!=null and sel1!='' ">
+				and eduk_step1 = #{sel1} 
+			</if>
+			<if test=" sel2!=null and se12!='' ">
+				and eduk_step2 = #{sel2}
+			</if>
+			<if test=" sel3!=null and se13!='' ">
+				and areak_step1 = #{sel3}
+			</if>
+			<if test=" sel4!=null and se14!='' ">
+				and areak_step2 = #{sel4}
+			</if>				
+		</where>
+	</select>
+	
+	<!-- 2단계 검색 -->
+	<select id="select02" resultType="com.hb.mybatis.CVO">
+		select * from TREADEBOARD
+		<where>
+			<if test=" sel1!=null and sel1!='' ">
+				and eduk_step1 = #{sel1} 
+			</if>
+			<if test=" sel2!=null and se12!='' ">
+				and eduk_step2 = #{sel2}
+			</if>
+			<if test=" sel3!=null and se13!='' ">
+				and areak_step1 = #{sel3}
+			</if>
+			<if test=" sel4!=null and se14!='' ">
+				and areak_step2 = #{sel4}
+			</if>				
+		</where>
+	</select>
+	
+	<!-- 3단계 검색 -->
+	<select id="select03" resultType="com.hb.mybatis.CVO">
+		select * from TREADEBOARD
+		<where>
+			<if test=" sel1!=null and sel1!='' ">
+				and eduk_step1 = #{sel1} 
+			</if>
+			<if test=" sel2!=null and se12!='' ">
+				and eduk_step2 = #{sel2}
+			</if>
+			<if test=" sel3!=null and se13!='' ">
+				and areak_step1 = #{sel3}
+			</if>
+			<if test=" sel4!=null and se14!='' ">
+				and areak_step2 = #{sel4}
+			</if>				
+		</where>
+	</select>
+	
+	<!-- 4단계 검색 -->
+	<select id="select04" resultType="com.hb.mybatis.CVO">
+		select * from TREADEBOARD
+		<where>
+			<if test=" sel1!=null and sel1!='' ">
+				and eduk_step1 = #{sel1} 
+			</if>
+			<if test=" sel2!=null and se12!='' ">
+				and eduk_step2 = #{sel2}
+			</if>
+			<if test=" sel3!=null and se13!='' ">
+				and areak_step1 = #{sel3}
+			</if>
+			<if test=" sel4!=null and se14!='' ">
+				and areak_step2 = #{sel4}
+			</if>				
+		</where>
+	</select>
+	
+	<!-- 자료실 등록 -->
+	<insert id="d_insert">
+		insert into datatbl values(datatbl_seq.nextval,#{d_write},#{d_department},#{d_phon},#{d_title},#{d_content},sysdate,#{d_filename},0)
+	</insert>
+	<select id="datalist" resultType="com.hb.mybatis.DVO">
+		 select * from (
+		 		select rownum r_num, a.* from (
+		 			select * from datatbl 
+		 		) a
+		 ) where r_num between 1 and 3
+	</select>
+	
+	<select id="datalist1" resultType="com.hb.mybatis.DVO">
+		 select * from (
+		 		select rownum r_num, a.* from (
+		 			select * from datatbl 
+		 		) a
+		 ) where r_num between 1 and #{more}
+	</select>
+	
+	<select id="dataone" resultType="com.hb.mybatis.DVO">
+		select * from (
+		 		select rownum r_num, a.* from (
+		 			select * from datatbl 
+		 		) a
+		 ) where data_idx = #{data_idx}
+	</select>
+	
+	<select id="r_numlist" resultType="com.hb.mybatis.DVO">
+		 select * from (
+		 		select rownum r_num, a.* from (
+		 			select * from datatbl 
+		 		) a
+			 )
+	   where r_num = #{r_num} or r_num = #{r_num} +1 or r_num= #{r_num} -1
+	</select>
+	
+	
+	<select id="datbefore" resultType="com.hb.mybatis.DVO">
+		select * from datatbl where data_idx = #{before_idx}
+	</select>
+	
+	<select id="afterlist" resultType="com.hb.mybatis.DVO">
+		select * from datatbl where data_idx = #{after_idx}
+	</select>
+	
+	<!-- 히트 업데이트 -->
+	<update id="hitupD" parameterType="com.hb.mybatis.DVO">
+		update datatbl set t_count = #{t_count} where data_idx = #{data_idx}
+	</update>
+	
+	<!-- 자료실 게시물의 수 -->
+	<select id="Datacount" resultType="int">
+		select count(*) from datatbl
+	</select>
+	
+	<!-- 댓글 리스트 가져오기 -->
+	<select id="commentlist" resultType="com.hb.mybatis.COMENTVO">
+		select * from c_comment where treade_idx = #{treade_idx} ORDER BY c_groups desc 
+	</select>
+	
+	<!-- 원글등록 -->
+	<insert id="commentwrite">
+		insert into c_comment values(c_idx_seq.nextval,#{treade_idx},#{u_idx},#{u_name},#{c_pwd},#{c_content},c_groups_seq.nextval,0,0,sysdate)
+	</insert>
+	
+	<!-- 댓글삭제 -->
+	<delete id="commentDel">
+		delete C_COMMENT where c_idx = #{c_idx}
+	</delete>
+	
+	<!-- 댓글수정 -->
+	<update id="commentmodify" parameterType="Map">
+		UPDATE C_COMMENT SET C_CONTENT = #{c_content} where c_idx = #{c_idx}
+	</update>
+	
+</mapper>
+
+
+
+
+
+
